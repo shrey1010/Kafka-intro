@@ -1,0 +1,38 @@
+version: '3.4'
+
+services:
+  cf-zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: cf-zookeeper
+    hostname: zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+    ports:
+      - '2181:2181'
+
+  cf-kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: cf-kafka
+    hostname: kafka
+    environment:
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://cf-kafka:29092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://cf-kafka:29092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT_INTERNAL
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    depends_on:
+      - cf-zookeeper
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    environment:
+      - KAFKA_BROKERCONNECT=cf-kafka:29092
+    ports:
+      - '9000:9000'
+    depends_on:
+      - cf-kafka
